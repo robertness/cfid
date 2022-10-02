@@ -1,0 +1,86 @@
+---
+title: "Sequential model identification"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{sequential_model_identification}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(cfid)
+```
+
+# Identification with random actions
+
+The graph with random actions is as follows (T=4).
+
+<img alt="Random Actions DAG" src="https://i.imgur.com/F2mhO14.png" width="400">
+
+<img alt="Random Actions ADMG" src="https://i.imgur.com/tgnglzt.png" width="400">
+
+### Building the DAG
+
+```{r}
+g_random_action <- dag( "X -> Y0;
+                         X -> Y1;
+                         X -> Y2;
+                         X -> Y3;
+                         X -> YT;
+                         Y0 <-> Y1;
+                         Y0 <-> Y2;
+                         Y0 <-> Y3;
+                         Y0 <-> YT;
+                         Y1 <-> Y2;
+                         Y1 <-> Y3;
+                         Y1 <-> YT;
+                         Y2 <-> Y3;
+                         Y2 <-> YT;
+                         Y3 <-> YT;
+                         A0 -> Y1;
+                         A0 -> Y2;
+                         A0 -> Y3;
+                         A0 -> YT;
+                         A1 -> Y2;
+                         A1 -> Y3;
+                         A1 -> YT;
+                         A2 -> Y3;
+                         A2 -> YT;
+                         A3 -> YT;
+")
+```
+
+## Example queries
+
+### Query 1
+
+We are given that $A_0=1$, $Y_1=0$, and $X=x$, what is the joint probability that $do(A_1 = 1)$ would lead to $Y_2 = 1$ *and* $do(A_1 = 0)$ would lead to $Y_2 = 0$?
+
+`cf` defines the action outcome tuple in one world.
+```{r query1}
+world1 <- cf("Y2", 1, c(A1 = 1))
+world2 <- cf("Y2", 0, c(A1 = 0))
+query <- conj(world1, world2)
+print(query)
+```
+Use the `identifiable` function to test if this estimand is identified using the ID*.
+
+```{r}
+identifiable(g_random_action, query)
+```
+
+See `?identifiable` to see description of the output.
+
+We are conditioning on `c(A0=1, Y1=0, X=x)`.  Conditioning can affect the identifiability of a query.  So it is passed as an argument to the "identifiable" method.  This will call the IDC* algorithm (or just ID* if there is no condition.)
+
+```{r identify q1}
+condition = conj(cf("A0", 1), cf("Y1", 0), cf("X", 1))
+identifiable(g_random_action, query, condition)
+```
