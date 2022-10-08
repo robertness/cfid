@@ -1,5 +1,5 @@
 ---
-title: "visualization"
+title: "Visualizing graphs in CFID"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{visualization}
@@ -18,49 +18,52 @@ knitr::opts_chunk$set(
 library(cfid)
 ```
 
-Plotting the graph using dagitty and ggdag.
+## Plotting with dagitty
+
+Plotting the graph by exporting a dagitty graph and using ggdag.
 It is best not to load dagitty directly, as it's namespace clashes with cfid.
-Dagitty doesn't accept the special characters that cfid uses in labeling variables, so `get_edgestring` does some reformatting.
+Dagitty export doesn't work with parallel graphs Dagitty doesn't accept the special characters that cfid uses in labeling variables in counterfactual graphs and parallel world graph.
 Specifically [U[X, Y] becomes U_XY.
 
 ```{r}
-g_ <- cfid::dag("X -> W -> Y <- Z <- D X <-> Y")
-dagitty_g <- export_graph(g_, "dagitty")
+g <- cfid::dag("X -> W -> Y <- Z <- D X <-> Y")
+dagitty_g <- export_graph(g, "dagitty")
 ggdag::ggdag(dagitty_g) + ggdag::theme_dag_gray()
 ```
 
+## Plotting with bnlearn and rgraphviz
 
-Exporting an edge list so we can plot with tools like bnlearn and Rgraphviz.
+The Bayesian network package bnlearn has a good interface with graphviz.
+Plotting this way requires less boilerplate then using rgraphviz directly.
 Rgraphviz needs to be installed via bioconductor.
 
 ```{r}
-net <- bnlearn::empty.graph(nodes=get_nodes(g_))
-el <- get_edgelist(g_)
-bnlearn::arcs(net) <- el
-bnlearn::graphviz.plot(net)
+plot_graphviz <- function(g){
+  el <- get_edgelist(g)
+  nodes_ <- unique(unlist(el))
+  net <- bnlearn::empty.graph(nodes=nodes_)
+  bnlearn::arcs(net) <- el
+  bnlearn::graphviz.plot(net)
+}
+plot_graphviz(g)
 ```
 
 
-The following graph is an intermediate object created in the following call to ``identifiable."
+## Plotting a parallel world graph.
 
 ```{r}
 v1 <- cf("Y", 0, c(X = 0))
 v2 <- cf("X", 1)
 v3 <- cf("Z", 0, c(D = 0))
 v4 <- cf("D", 0)
-c1 <- conj(v1, v2, v3, v4)
-g1 <- dag("X -> W -> Y <- Z <- D X <-> Y")
-
-identifiable(g1, c1)
-
-el <- data.frame(
-  from=c("x", "W_{x}",  "Z_{x}",  "U[X,Y]", "D_{x}",  "d",  "U[X,Y]"),
-  to=c("W_{x}", "Y_{x}", "Y_{x}", "Y_{x}", "Z_{x}", "Z_{x}", "X")
-)
-
-cg_nodes <- c("x", "W_{x}", "Z_{x}", "U[X,Y]", "D_{x}",  "d", "Y_{x}",  "X")
-net <- bnlearn::empty.graph(nodes=cg_nodes)
-bnlearn::arcs(net) <- el
-bnlearn::graphviz.plot(net)
+gamma <- conj(v4, v1, v2, v3)
+pw_graph <- cfid:::pwg(g, gamma)
+plot_graphviz(pw_graph)
 ```
 
+## Plotting a counterfactual graph
+
+```{r}
+cf_graph <- cfid:::make_cg(g, gamma)
+plot_graphviz(cf_graph)
+```
