@@ -58,17 +58,6 @@ check_conflicts <- function(x, y) {
     }
 }
 
-format_node <- function(node){
-  node <- as.character(node)
-  needs_formatting <- stringr::str_detect(node, "\\[")
-  if(!needs_formatting) return(node)
-  chars <- unlist(stringr::str_split(node, ""))
-  chars <- chars[c(1, 2, 3, 5)]
-  chars[2] <- "_"
-  string <- paste0(chars, collapse = "")
-  return(string)
-}
-
 get_nodes <- function(g){
   nodes <- attr(g, "labels")
   if(class(nodes) != "character"){
@@ -89,16 +78,4 @@ get_edgelist <- function(g){
   colnames(el) <- c("from", "to")
   el <- dplyr::mutate(el, from=as.character(from), to=as.character(to))
   return(el)
-}
-
-get_edgestring <- function(g){
-  el <- get_edgelist(g)
-  el <- dplyr::mutate(
-    el,
-    from=sapply(el$from, format_node),
-    to=sapply(el$to, format_node)
-  )
-  strings <- dplyr::mutate(el, edges=paste0(from, " -> ", to))$edges
-  string <- paste0(strings, collapse=" ")
-  return(string)
 }

@@ -25,12 +25,13 @@ Specifically [U[X, Y] becomes U_XY.
 
 ```{r}
 g_ <- cfid::dag("X -> W -> Y <- Z <- D X <-> Y")
-edgestring <- get_edgestring(g_)
-dagitty_g <- dagitty::dagitty(paste("dag {", edgestring, "}"))
+dagitty_g <- export_graph(g_, "dagitty")
 ggdag::ggdag(dagitty_g) + ggdag::theme_dag_gray()
 ```
 
-Plotting with bnlearn and Rgraphviz.  Rgraphviz needs to be installed via bioconductor.
+
+Exporting an edge list so we can plot with tools like bnlearn and Rgraphviz.
+Rgraphviz needs to be installed via bioconductor.
 
 ```{r}
 net <- bnlearn::empty.graph(nodes=get_nodes(g_))
