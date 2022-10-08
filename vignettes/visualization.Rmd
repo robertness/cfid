@@ -23,7 +23,6 @@ library(cfid)
 Plotting the graph by exporting a dagitty graph and using ggdag.
 It is best not to load dagitty directly, as it's namespace clashes with cfid.
 Dagitty export doesn't work with parallel graphs Dagitty doesn't accept the special characters that cfid uses in labeling variables in counterfactual graphs and parallel world graph.
-Specifically [U[X, Y] becomes U_XY.
 
 ```{r}
 g <- cfid::dag("X -> W -> Y <- Z <- D X <-> Y")
