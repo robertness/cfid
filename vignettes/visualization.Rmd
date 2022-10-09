@@ -1,0 +1,68 @@
+---
+title: "Visualizing graphs in CFID"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{visualization}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(cfid)
+```
+
+## Plotting with dagitty
+
+Plotting the graph by exporting a dagitty graph and using ggdag.
+It is best not to load dagitty directly, as it's namespace clashes with cfid.
+Dagitty export doesn't work with parallel graphs Dagitty doesn't accept the special characters that cfid uses in labeling variables in counterfactual graphs and parallel world graph.
+
+```{r}
+g <- cfid::dag("X -> W -> Y <- Z <- D X <-> Y")
+dagitty_g <- export_graph(g, "dagitty")
+ggdag::ggdag(dagitty_g) + ggdag::theme_dag_gray()
+```
+
+## Plotting with bnlearn and rgraphviz
+
+The Bayesian network package bnlearn has a good interface with graphviz.
+Plotting this way requires less boilerplate then using rgraphviz directly.
+Rgraphviz needs to be installed via bioconductor.
+
+```{r}
+plot_graphviz <- function(g){
+  el <- get_edgelist(g)
+  nodes_ <- unique(unlist(el))
+  net <- bnlearn::empty.graph(nodes=nodes_)
+  bnlearn::arcs(net) <- el
+  bnlearn::graphviz.plot(net)
+}
+plot_graphviz(g)
+```
+
+
+## Plotting a parallel world graph.
+
+```{r}
+v1 <- cf("Y", 0, c(X = 0))
+v2 <- cf("X", 1)
+v3 <- cf("Z", 0, c(D = 0))
+v4 <- cf("D", 0)
+gamma <- conj(v4, v1, v2, v3)
+pw_graph <- cfid:::pwg(g, gamma)
+plot_graphviz(pw_graph)
+```
+
+## Plotting a counterfactual graph
+
+```{r}
+cf_graph <- cfid:::make_cg(g, gamma)
+plot_graphviz(cf_graph)
+```

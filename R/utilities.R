@@ -57,3 +57,47 @@ check_conflicts <- function(x, y) {
         stop_("Inconsistent definitions given for variables: ", conf_form)
     }
 }
+
+MAKE_CG_LIST_NAMES = c("graph", "conjunction", "merged", "consistent")
+
+get_nodes <- function(g){
+  if(class(g) == "DAG"){
+    nodes <- attr(g, "labels")
+  }
+  else if(class(g) == "list" && "labels" %in% names(g)){
+    nodes <- g$labels
+  } else if(class(g) == "list" && all(names(g) == MAKE_CG_LIST_NAMES)){
+    nodes <- attr(g$graph, "labels")
+  } else {
+    stop("Unrecognized graph structure.")
+  }
+  
+  if(class(nodes) != "character"){
+    nodes <- sapply(nodes, format)
+  }
+  return(nodes)
+}
+
+get_edgelist <- function(g){
+  nodes <- get_nodes(g)
+  if(class(g) == "DAG"){
+    mat <- g
+    attr(mat, "class") <- "matrix"
+  } else if(class(g) == "list" && "adjacency" %in% names(g)){
+    mat <- g$adjacency
+  } else if(class(g) == "list" && all(names(g) == MAKE_CG_LIST_NAMES)){
+    mat <- g$graph
+    attr(mat, "class") <- "matrix"
+  } else {
+    stop("Unrecognized graph structure.")
+  }
+  
+  colnames(mat) <- nodes
+  rownames(mat) <- nodes
+  el <- reshape2::melt(mat)
+  el <- dplyr::filter(el, value==1)
+  el <- dplyr::select(el, -value)
+  colnames(el) <- c("from", "to")
+  el <- dplyr::mutate(el, from=as.character(from), to=as.character(to))
+  return(el)
+}
