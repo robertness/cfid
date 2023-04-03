@@ -1,0 +1,45 @@
+---
+title: "Simple intervention in counterfactual graph"
+author: "Robert Ness"
+date: "2023-04-02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load}
+library(cfid)
+```
+
+
+```{r}
+g <- cfid::dag("X  -> Y <- Z -> X")
+
+plot_graphviz <- function(g){
+  el <- get_edgelist(g)
+  nodes_ <- unique(unlist(el))
+  net <- bnlearn::empty.graph(nodes=nodes_)
+  bnlearn::arcs(net) <- el
+  bnlearn::graphviz.plot(net)
+}
+plot_graphviz(g)
+```
+
+
+## Plotting a parallel world graph.
+
+```{r}
+v1 <- cf("Y", 1, c(X = 0))
+gamma <- conj(v1)
+pw_graph <- cfid:::pwg(g, gamma)
+plot_graphviz(pw_graph)
+```
+
+## Plotting a counterfactual graph
+
+```{r}
+cf_graph <- cfid:::make_cg(g, gamma)
+plot_graphviz(cf_graph)
+```
