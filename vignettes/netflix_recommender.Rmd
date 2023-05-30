@@ -1,0 +1,46 @@
+---
+title: "Visualizing graphs in CFID"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{visualization}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r}
+library(cfid)
+plot_graphviz <- function(g){
+  el <- get_edgelist(g)
+  nodes_ <- unique(unlist(el))
+  net <- bnlearn::empty.graph(nodes=nodes_)
+  bnlearn::arcs(net) <- el
+  bnlearn::graphviz.plot(net)
+}
+
+g <- cfid::dag("C -> T -> W -> A <- C; C -> B -> V -> A")
+plot_graphviz(g)
+```
+
+# Effect of Treatment on the Treated
+
+```{r}
+v1 <- cf("A", 1, c(T = 0))
+v2 <- cf("T", 1)
+gamma <- conj(v1, v2)
+pw_graph <- cfid:::pwg(g, gamma)
+```
+
+```{r}
+plot_graphviz(pw_graph)
+```
+
+```{r}
+plot_graphviz(cfid:::make_cg(g, gamma))
+```
